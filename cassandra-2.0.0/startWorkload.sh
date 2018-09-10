@@ -8,7 +8,7 @@ fi
 . ./readconfig
 
 test_id=$1
-workload_name="cass-6013"
+workload_name="cass-6023"
 
 classpath=$working_dir:$target_sys_dir/build/classes/main:$target_sys_dir/build/classes/thrift
 driverLib=$target_sys_dir/datastax_lib

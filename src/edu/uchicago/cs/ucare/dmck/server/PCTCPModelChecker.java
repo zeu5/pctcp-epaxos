@@ -1,22 +1,18 @@
 package edu.uchicago.cs.ucare.dmck.server;
 
+import com.almworks.sqlite4java.SQLiteException;
+import edu.uchicago.cs.ucare.dmck.transition.*;
+import edu.uchicago.cs.ucare.dmck.util.ExploredBranchRecorder;
+import edu.uchicago.cs.ucare.dmck.util.SqliteExploredBranchRecorder;
+import edu.uchicago.cs.ucare.dmck.server.pctcp.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.Random;
-import com.almworks.sqlite4java.SQLiteException;
-import edu.uchicago.cs.ucare.dmck.server.pctcp.PCTCPConfig;
-import edu.uchicago.cs.ucare.dmck.transition.AbstractNodeCrashTransition;
-import edu.uchicago.cs.ucare.dmck.transition.AbstractNodeOperationTransition;
-import edu.uchicago.cs.ucare.dmck.transition.AbstractNodeStartTransition;
-import edu.uchicago.cs.ucare.dmck.transition.NodeOperationTransition;
-import edu.uchicago.cs.ucare.dmck.transition.Transition;
-import edu.uchicago.cs.ucare.dmck.util.ExploredBranchRecorder;
-import edu.uchicago.cs.ucare.dmck.util.SqliteExploredBranchRecorder;
 
-public class RandomModelChecker extends ModelCheckingServerAbstract {
+public class PCTCPModelChecker extends ModelCheckingServerAbstract {
 
   ExploredBranchRecorder exploredBranchRecorder;
   int numCrash;
@@ -24,25 +20,30 @@ public class RandomModelChecker extends ModelCheckingServerAbstract {
   int currentCrash;
   int currentReboot;
   String stateDir;
-  Random random;
+
+  PCTCPScheduler scheduler;
+
+  // PCTCP parameters files are read from a config file
+  // The following are the default values
+  long seed = 12345678;
+  int maxMessages = 54;
+  int bugDepth = 5; // bugDepth #events to order, bugDepth - 1 #priority-change-points in PCTCPScheduler
+  int windowStartIndex = 0;
+  int windowEndIndex = 53;
+  int maxIterations = 1000;
 
   int numEvents = 0;
-  int maxNumEnabledEvents = 0;
-  double avgNumOfEvents = 0;
-  double avgNumOfEnabledEvents = 0;
-
   int currentIteration = 0;
-  int maxIterations = 5;
+  double avgNumOfEvents = 0;
+  double avgNumOfChains = 0;
 
-  long seed = 12345678;
 
-  public RandomModelChecker(String dmckName, FileWatcher fileWatcher, int numNode, int numCrash,
-      int numReboot, String globalStatePathDir, String packetRecordDir, String workingDir,
-      WorkloadDriver workloadDriver, String ipcDir) {
+  public PCTCPModelChecker(String dmckName, FileWatcher fileWatcher, int numNode, int numCrash,
+                           int numReboot, String globalStatePathDir, String packetRecordDir, String workingDir,
+                           WorkloadDriver workloadDriver, String ipcDir) {
     super(dmckName, fileWatcher, numNode, globalStatePathDir, workingDir, workloadDriver, ipcDir);
     this.numCrash = numCrash;
     this.numReboot = numReboot;
-    //stateDir = packetRecordDir;
     stateDir = globalStatePathDir;
     try {
       exploredBranchRecorder = new SqliteExploredBranchRecorder(packetRecordDir);
@@ -50,25 +51,41 @@ public class RandomModelChecker extends ModelCheckingServerAbstract {
       LOG.error("", e);
     }
 
-    readConfig();
-    random = new Random(seed);
+    readPCTCPConfig();
 
-    StringBuilder sb = new StringBuilder("Random - Started test with initial seed: ");
-    sb.append(seed);
+    StringBuilder sb = new StringBuilder("PCTCP - Started test with initial seed: ");
+    sb.append(seed).append("\nMax messages: ").append(maxMessages)
+        .append("  Window_start_index:").append(windowStartIndex).append("  Window_end_index: ").append(windowEndIndex)
+        .append("\nNumber of iterations to run: ").append(maxIterations);
     record(sb.toString());
-
+    LOG.info(sb.toString());
     resetTest();
   }
 
-  private void readConfig() {
+  private void readPCTCPConfig() {
     PCTCPConfig cfg = new PCTCPConfig();
 
-    String seedStr = cfg.getProperty("random.randomSeed");
-    String maxIterationsStr = cfg.getProperty("random.maxIterations");
-
+    String seedStr = cfg.getProperty("pctcp.randomSeed");
+    String maxMessagesStr = cfg.getProperty("pctcp.maxMessages");
+    String bugDepthStr = cfg.getProperty("pctcp.bugDepth");
+    String windowStartIndexStr = cfg.getProperty("pctcp.windowStartIndex");
+    String windowEndIndexStr = cfg.getProperty("pctcp.windowEndIndex");
+    String maxIterationsStr = cfg.getProperty("pctcp.maxIterations");
 
     if(seedStr != null)
       seed = Long.parseLong(seedStr);
+
+    if(maxMessagesStr != null)
+      maxMessages = Integer.parseInt(maxMessagesStr);
+
+    if(bugDepthStr != null)
+      bugDepth = Integer.parseInt(bugDepthStr);
+
+    if(windowStartIndexStr != null)
+      windowStartIndex = Integer.parseInt(windowStartIndexStr);
+
+    if(windowEndIndexStr != null)
+      windowEndIndex = Integer.parseInt(windowEndIndexStr);
 
     if(maxIterationsStr != null)
       maxIterations = Integer.parseInt(maxIterationsStr);
@@ -77,7 +94,7 @@ public class RandomModelChecker extends ModelCheckingServerAbstract {
     String workloadFilesAll = cfg.getProperty("workloadFiles");
 
     if(workloadPointsAllStr != null) {
-      String points[] =workloadPointsAllStr.split(",");
+      String points[] = workloadPointsAllStr.split(",");
       workloadDriver.workloadPoints.clear();
       for(String s: points)
         workloadDriver.workloadPoints.add(Integer.parseInt(s));
@@ -93,10 +110,9 @@ public class RandomModelChecker extends ModelCheckingServerAbstract {
     }
   }
 
-
   public void getDMCKConfig() {
     super.getDMCKConfig();
-    readConfig();
+    readPCTCPConfig();
   }
 
   @Override
@@ -106,7 +122,6 @@ public class RandomModelChecker extends ModelCheckingServerAbstract {
       recordTimeInfo();
       System.exit(-1);
     }
-
     if (exploredBranchRecorder == null) {
       return;
     }
@@ -123,19 +138,13 @@ public class RandomModelChecker extends ModelCheckingServerAbstract {
       LOG.error("", e);
     }
 
+    PCTCPOptions options = new PCTCPOptions(seed, maxMessages, bugDepth, windowStartIndex, windowEndIndex);
+    scheduler = new PCTCPScheduler(options);
     numEvents = 0;
-    maxNumEnabledEvents = 0;
+    seed += 1;
     currentIteration ++;
-
     initial = true;
     willRepeat = false;
-
-    StringBuilder sb = new StringBuilder("Random testing started test with initial seed: ");
-    sb.append(seed).append("\n");
-    record(sb.toString());
-    LOG.info(sb.toString());
-    random = new Random(seed);
-    seed ++;
   }
 
   boolean initial = true;
@@ -143,11 +152,12 @@ public class RandomModelChecker extends ModelCheckingServerAbstract {
 
   @SuppressWarnings("unchecked")
   public Transition nextTransition(LinkedList<Transition> transitions) {
-    if(initial && currentEnabledTransitions.size() < 3 && currentEnabledTransitions.size() > 0) {
-      System.out.println("Some messages have not arrived.. Will repeat the test with the same seed..");
-      willRepeat = true;
-      seed --;
-      currentIteration --;
+
+    if(initial && currentEnabledTransitions.size() < 3) {
+       System.out.println("Some messages have not arrived.. Will repeat the test with the same seed..");
+       willRepeat = true;
+       seed --;
+       currentIteration --;
     }
     initial = false;
 
@@ -155,14 +165,36 @@ public class RandomModelChecker extends ModelCheckingServerAbstract {
     if(wl != -1) workloadDriver.startWorkload(wl);
 
     LinkedList<Transition> cloneQueue = (LinkedList<Transition>) transitions.clone();
+    scheduler.addNewEvents(cloneQueue);
+
     while (cloneQueue.size() > 0) {
-      int i = random.nextInt(cloneQueue.size());
-      Transition cloneTransition = cloneQueue.remove(i);
-      numEvents++;
-      if (!exploredBranchRecorder.isSubtreeBelowChildFinished(cloneTransition.getTransitionId())) {
+
+      Transition scheduled = scheduler.scheduleNext();
+      //LOG.info("PCTPC - Transition to schedule: " + scheduled);
+
+      if(scheduled == null) {
+       LOG.error("Scheduled is null. Scheduler data: " + scheduler.toString());
+       for(Transition t: cloneQueue) {
+         LOG.error(t.toString());
+       }
+       System.exit(-1);
+      }
+      Transition cloneTransition = null;
+
+      for(Transition t: cloneQueue) {
+          if(t.getTransitionId() == scheduled.getTransitionId()) {
+            cloneTransition = t;
+            cloneQueue.remove(t);
+            break;
+          }
+      }
+
+      if (cloneTransition != null && !exploredBranchRecorder.isSubtreeBelowChildFinished(cloneTransition.getTransitionId())) {
+        numEvents++;
         return cloneTransition;
       }
     }
+
     return null;
   }
 
@@ -209,8 +241,8 @@ public class RandomModelChecker extends ModelCheckingServerAbstract {
       while (true) {
         executeMidWorkload();
         updateSAMCQueueWithoutLog();
-        boolean terminationPoint = checkTerminationPoint(currentEnabledTransitions);
-        if (terminationPoint && hasWaited) {
+        boolean terminationPoint = checkTerminationPoint(currentEnabledTransitions); 
+        if ((terminationPoint && hasWaited) /*|| (currentIteration > maxIterations)*/) {
           collectDebugData(localStates);
           LOG.info("---- End of Path Execution ----");
 
@@ -229,11 +261,11 @@ public class RandomModelChecker extends ModelCheckingServerAbstract {
 
           collectPerformancePerPathMetrics();
           LOG.info("---- End of Path Evaluation ----");
-
+          //B
+          //scheduler.printSchedule();
           if(!willRepeat) {
             recordRunInfo();
           }
-
           resetTest();
           break;
         } else if (terminationPoint) {
@@ -254,24 +286,21 @@ public class RandomModelChecker extends ModelCheckingServerAbstract {
         hasWaited = waitEndExploration == 0;
         Transition nextEvent;
         // take next path based on initial path or current policy
-        boolean recordPath = true;
+        //boolean recordPath = true;
         //if (hasDirectedInitialPath && !hasFinishedDirectedInitialPath) {
         //  nextEvent = nextInitialTransition();
         //  recordPath = false;
         //} else {
-          int numEnabledEvents = currentEnabledTransitions.size();
-          if(numEnabledEvents > maxNumEnabledEvents) maxNumEnabledEvents = numEnabledEvents;
-
-          nextEvent = nextTransition(currentEnabledTransitions);
+          nextEvent = nextTransition(currentEnabledTransitions); //BB PCT decides!
         //}
         if (nextEvent != null) {
           // Collect Logs
           collectDebugData(localStates);
-          if (recordPath) {
+        //  if (recordPath) {
             exploredBranchRecorder.createChild(nextEvent.getTransitionId());
             exploredBranchRecorder.traverseDownTo(nextEvent.getTransitionId());
             exploredBranchRecorder.noteThisNode(".packets", nextEvent.toString(), false);
-          }
+        //  }
 
           // Transform abstract event to real event.
           if (nextEvent instanceof AbstractNodeOperationTransition) {
@@ -303,10 +332,11 @@ public class RandomModelChecker extends ModelCheckingServerAbstract {
         }
       }
     }
-
   }
 
   public void recordRunInfo() {
+
+    int numEvents = scheduler.getSchedule().size();
 
     if(numEvents == 0) { // no messages arrives
       System.out.println("No messages have not arrived.. Will repeat the test with the same seed..");
@@ -314,13 +344,17 @@ public class RandomModelChecker extends ModelCheckingServerAbstract {
       currentIteration --;
 
     } else {
+      recorder.writeToFile(scheduler.toString());
+
       avgNumOfEvents += numEvents;
-      avgNumOfEnabledEvents += maxNumEnabledEvents;
+      avgNumOfChains += scheduler.getMaxNumAvailableChains();
 
       recorder.writeToFile("Last scheduled number of events: " + numEvents);
       recorder.writeToFile("Average number of events: " + (avgNumOfEvents / currentIteration));
-      recorder.writeToFile("Average number of concurrently enabled events: " + (avgNumOfEnabledEvents / currentIteration));
+      recorder.writeToFile("Average number of max chains: " + (avgNumOfChains / currentIteration));
       recorder.writeToFile("Number of iterations: " + currentIteration + "\n\n");
     }
   }
+
 }
+

@@ -18,24 +18,24 @@ ipc_dir=/tmp/ipc
 # DMCK Main Directory
 #   Store the complete DMCK code
 #   Default: /home/yourusername/dmck
-dmck_dir=/home/jeff/Programs/DMCK
+dmck_dir=/home/vagrant/DMCK
 
 # Target System Directory (optional)
 #   Point this to the target system directory
 #   Default: /home/yourusername/target-system 
-target_sys_dir=/home/jeff/Programs/DMCK-target-systems/cassandra-6023
+target_sys_dir=/home/vagrant/DMCK/dmck-target-systems/cassandra-6023
 
 # DMCK File Watcher Class
 #   Point this to the FileWatcher class that you have made
 #   specific for your target system
 #   Default: edu.uchicago.cs.ucare.dmck.yourtargetsystem.YourTargetSystemFileWatcher
-initial_path=/home/jeff/Programs/DMCK/cassandra-2.0.0/initialPaths/cass-6023
+initial_path=/home/vagrant/DMCK/cassandra-2.0.0/initialPaths/cass-6023
 
 # DMCK Expected Result Path (optional)
 #   If it is setup, the DMCK will stop its exploration
 #   once it sees that the latest execution path reach the specific result evaluation
 #   Default: /home/yourusername/dmck/target-system/expectedResultPaths/dcbugnumber-file
-expected_result_path=/home/jeff/Programs/DMCK/cassandra-2.0.0/expectedResultPaths/cass-6023
+expected_result_path=/home/vagrant/DMCK/cassandra-2.0.0/expectedResultPaths/cass-6023
 
 # DMCK Exploration Strategy Class
 #   Point this to the Exploration Strategy that you want to use.
@@ -44,7 +44,8 @@ expected_result_path=/home/jeff/Programs/DMCK/cassandra-2.0.0/expectedResultPath
 #   - Random = edu.uchicago.cs.ucare.dmck.server.RandomModelChecker
 #   - DPOR   = edu.uchicago.cs.ucare.dmck.server.DporModelChecker
 #   - SAMC   = edu.uchicago.cs.ucare.dmck.yourTargetSystem.YourTargetSystemSAMC
-exploring_strategy=edu.uchicago.cs.ucare.dmck.cassandra.CassSAMC
+#exploring_strategy=edu.uchicago.cs.ucare.dmck.server.RandomModelChecker
+exploring_strategy=edu.uchicago.cs.ucare.dmck.server.PCTCPModelChecker
 
 # DMCK File Watcher Class
 #   Point this to the FileWatcher class that you have made
@@ -82,3 +83,7 @@ num_reboot=0
 # Workload - Number of Client/Admin Operations Injected in the Initial Execution Path (Optional)
 #   Default: 0
 num_init_workload=1
+
+
+traversal_record_dir=/tmp/cassandra-6023/record
+test_record_dir=/tmp/cassandra-6023/state

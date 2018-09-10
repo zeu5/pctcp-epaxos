@@ -173,7 +173,8 @@ public class DMCKRunner {
       });
 
       // DMCK exploration cycle
-      for (; !finishedFlag.exists(); ++testId) {
+      //for (; !finishedFlag.exists(); ++testId) {
+      for (; ; ++testId) { //tests will be stopped by PCTCPModelChecker (considering the executions with missing packets)
         // reset phase
         waitingFlag.delete();
         workloadDriver.resetTest(testId);
@@ -189,11 +190,10 @@ public class DMCKRunner {
         // if it exists the while loop, DMCK stops the target system nodes
         dmck.stopEnsemble();
 
+        checkIfBugReproduced();
+
         // DMCK determines whether to stop or to continue paths exploration
-        if (dmck.hasReproducedBug()) {
-          LOG.info("DMCK has reproduced the expected bug.");
-          break;
-        } else if (dmck.hasNoMoreInterestingPath()) {
+        if (dmck.hasNoMoreInterestingPath()) {
           LOG.info("There is no more interesting Initial Paths. Finished exploring all states.");
           break;
         }
@@ -212,4 +212,11 @@ public class DMCKRunner {
     }
   }
 
+  public static void checkIfBugReproduced() {
+    // DMCK determines whether to stop or to continue paths exploration
+    if (dmck.hasReproducedBug()) {
+      LOG.info("DMCK has reproduced the expected bug.");
+      dmck.record("DMCK has reproduced the expected bug.\n"); 
+    }
+  }
 }

@@ -20,6 +20,9 @@ cp $scriptdir/resettest $working_dir/resettest
 chmod 755 $working_dir/resettest
 echo traversal_record_dir=$working_dir/state >> $working_dir/target-sys.conf
 echo test_record_dir=$working_dir/record >> $working_dir/target-sys.conf
+# burcu
+cp $scriptdir/ballot.orig $scriptdir/ballot
+# end-burcu
 cp $scriptdir/ballot $working_dir/ballot
 cp $scriptdir/ballot $working_dir/ballot-copy
 

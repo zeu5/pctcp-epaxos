@@ -62,6 +62,7 @@ public class CassVerifier extends SpecVerifier {
           ? this.modelCheckingServer.workloadHasApplied.get(2)
           : "false";
 
+      LOG.info("Value1: " + value_1 + "    Value2: " + value_2);
       if (value_1.equals("A") && (value_2.equals("B"))) {
         errorType = "Cass-6023";
         return false;

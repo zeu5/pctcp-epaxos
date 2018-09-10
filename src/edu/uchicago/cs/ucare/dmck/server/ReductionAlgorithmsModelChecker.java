@@ -39,6 +39,8 @@ import edu.uchicago.cs.ucare.dmck.util.ExploredBranchRecorder;
 import edu.uchicago.cs.ucare.dmck.util.LocalState;
 import edu.uchicago.cs.ucare.dmck.util.SqliteExploredBranchRecorder;
 import edu.uchicago.cs.ucare.dmck.util.VectorClockUtil;
+import edu.uchicago.cs.ucare.dmck.protocol.FileRecorder;
+import java.time.LocalDateTime;
 
 public abstract class ReductionAlgorithmsModelChecker extends ModelCheckingServerAbstract {
 
@@ -124,6 +126,8 @@ public abstract class ReductionAlgorithmsModelChecker extends ModelCheckingServe
   private int lastPathId = 1;
   private int lastDiscardedPathId = -10;
 
+  private FileRecorder recorder = null;
+
   public ReductionAlgorithmsModelChecker(String dmckName, FileWatcher fileWatcher, int numNode,
       int numCrash, int numReboot, String globalStatePathDir, String packetRecordDir,
       String workingDir, WorkloadDriver workloadDriver, String ipcDir) {
@@ -147,7 +151,7 @@ public abstract class ReductionAlgorithmsModelChecker extends ModelCheckingServe
     reductionAlgorithms = new ArrayList<String>();
     policyRecord = new Hashtable<String, Integer>();
 
-    stateDir = packetRecordDir;
+    stateDir = globalStatePathDir;
     try {
       exploredBranchRecorder = new SqliteExploredBranchRecorder(packetRecordDir);
     } catch (SQLiteException e) {
@@ -198,6 +202,8 @@ public abstract class ReductionAlgorithmsModelChecker extends ModelCheckingServe
 
     // record policy effectiveness
     storePolicyEffectiveness();
+    if(recorder != null) recorder.closeFile();
+    //recorder = new FileRecorder("trace" + LocalDateTime.now().toString());
   }
 
   // load samc.conf to the DMCK

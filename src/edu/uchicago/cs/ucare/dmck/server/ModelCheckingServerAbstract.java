@@ -12,15 +12,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.ListIterator;
-import java.util.Properties;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import edu.uchicago.cs.ucare.dmck.protocol.FileRecorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import edu.uchicago.cs.ucare.dmck.event.Event;
@@ -151,6 +148,7 @@ public abstract class ModelCheckingServerAbstract implements ModelCheckingServer
   public LocalState[] perEventStateBatch;
   public String[] stateUpdateBook;
 
+
   @SuppressWarnings("unchecked")
   public ModelCheckingServerAbstract(String dmckName, FileWatcher fileWatcher, int numNode,
       String testRecordDirPath, String workingDirPath, WorkloadDriver workloadDriver,
@@ -186,6 +184,11 @@ public abstract class ModelCheckingServerAbstract implements ModelCheckingServer
     getDMCKConfig();
 
     watcherThread.start();
+
+    // Added for collecting stats for PCTCP and Random exploration //B
+    startTime = System.currentTimeMillis();  //B
+    recorder = new FileRecorder("Test" + LocalDateTime.now().toString() + ".txt"); //B
+
     resetTest();
   }
 
@@ -621,7 +624,7 @@ public abstract class ModelCheckingServerAbstract implements ModelCheckingServer
       counter++;
     }
     content += "------------------\n";
-    LOG.info(content);
+    //LOG.info(content);
     try {
       debugRecordFile.write(content.getBytes());
     } catch (IOException e) {
@@ -1292,4 +1295,21 @@ public abstract class ModelCheckingServerAbstract implements ModelCheckingServer
     return hasFinishedAllExploration;
   }
 
+  // Added for collecting stats for PCTCP and Random exploration
+  protected FileRecorder recorder;
+  protected long startTime;
+
+  public void record(String s) {
+    recorder.writeToFile(s);
+  }
+
+  public void recordTimeInfo() {
+    long endTime = System.currentTimeMillis();
+    record("Start time of the test: " + startTime);
+    record("End time of the test: " + endTime);
+    record("Elapsed time in msecs: " + (endTime - startTime));
+    record("Elapsed time in secs: " + (double)(endTime - startTime)/1000);
+    record("Elapsed time in mins: " + (double)(endTime - startTime)/60000 + "\n");
+    recorder.closeFile();
+  }
 }

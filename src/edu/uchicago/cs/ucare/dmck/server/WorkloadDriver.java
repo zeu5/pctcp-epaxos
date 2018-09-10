@@ -3,6 +3,9 @@ package edu.uchicago.cs.ucare.dmck.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public abstract class WorkloadDriver {
 
   protected final static Logger LOG = LoggerFactory.getLogger(WorkloadDriver.class);
@@ -98,6 +101,30 @@ public abstract class WorkloadDriver {
   public abstract void startWorkload();
 
   public abstract void stopWorkload();
+
+
+  // Added for controlled workload
+  protected List<Integer> workloadPoints = new ArrayList<Integer>();
+  protected List<String> workloadFiles = new ArrayList<String>();
+
+  public void startWorkload(int i) {
+    startWorkload(workloadFiles.get(i));
+  }
+
+  public int hasWorkloadAt(int pathIndex) {
+    return workloadPoints.indexOf(pathIndex);
+  }
+
+  public void startWorkload(String fileName) {
+    System.out.println(workingDir);
+    try {
+      LOG.info("Start Workload: " + fileName);
+      Runtime.getRuntime().exec(workingDir + "/" + fileName + " " + this.testId);
+      Thread.sleep(2000);
+    } catch (Exception e) {
+      LOG.error("Error in running workload file: " + fileName);
+    }
+  }
 
   public void setVerifier(SpecVerifier verifier) {
     this.verifier = verifier;

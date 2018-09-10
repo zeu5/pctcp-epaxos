@@ -17,4 +17,6 @@ done
 
 export CLASSPATH=$CLASSPATH:$classpath
 
-java -cp $CLASSPATH -Dlog4j.configuration=mc_log.properties -Ddmck.dir=$working_dir edu.uchicago.cs.ucare.dmck.server.DMCKRunner $pause
+# java -cp $CLASSPATH -Dlog4j.configuration=mc_log.properties -Ddmck.dir=$working_dir edu.uchicago.cs.ucare.dmck.server.DMCKRunner $pause
+
+java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -cp $CLASSPATH -Dlog4j.configuration=mc_log.properties -Ddmck.dir=$working_dir edu.uchicago.cs.ucare.dmck.server.DMCKRunner $pause

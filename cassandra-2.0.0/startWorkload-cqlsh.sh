@@ -22,15 +22,15 @@ echo "isApplied=true" >> /tmp/ipc/new/cassWorkloadUpdate-1
 mv /tmp/ipc/new/cassWorkloadUpdate-1 /tmp/ipc/send/cassWorkloadUpdate-1
 sleep 1s
 
-$target_sys_dir/bin/cqlsh 127.0.0.2 --file="$working_dir/query/update2.cql" > $working_dir/console/$test_id/workload2.log &
-echo $! > $working_dir/samc-workload2.pid
-echo "id=2" > /tmp/ipc/new/cassWorkloadUpdate-2
-echo "isApplied=true" >> /tmp/ipc/new/cassWorkloadUpdate-2
-mv /tmp/ipc/new/cassWorkloadUpdate-2 /tmp/ipc/send/cassWorkloadUpdate-2
-sleep 1s
+#$target_sys_dir/bin/cqlsh 127.0.0.2 --file="$working_dir/query/update2.cql" > $working_dir/console/$test_id/workload2.log &
+#echo $! > $working_dir/samc-workload2.pid
+#echo "id=2" > /tmp/ipc/new/cassWorkloadUpdate-2
+#echo "isApplied=true" >> /tmp/ipc/new/cassWorkloadUpdate-2
+#mv /tmp/ipc/new/cassWorkloadUpdate-2 /tmp/ipc/send/cassWorkloadUpdate-2
+#sleep 1s
 
-$target_sys_dir/bin/cqlsh 127.0.0.3 --file="$working_dir/query/update3.cql" > $working_dir/console/$test_id/workload3.log &
-echo $! > $working_dir/samc-workload3.pid
-echo "id=3" > /tmp/ipc/new/cassWorkloadUpdate-3
-echo "isApplied=true" >> /tmp/ipc/new/cassWorkloadUpdate-3
-mv /tmp/ipc/new/cassWorkloadUpdate-3 /tmp/ipc/send/cassWorkloadUpdate-3
+#$target_sys_dir/bin/cqlsh 127.0.0.3 --file="$working_dir/query/update3.cql" > $working_dir/console/$test_id/workload3.log &
+#echo $! > $working_dir/samc-workload3.pid
+#echo "id=3" > /tmp/ipc/new/cassWorkloadUpdate-3
+#echo "isApplied=true" >> /tmp/ipc/new/cassWorkloadUpdate-3
+#mv /tmp/ipc/new/cassWorkloadUpdate-3 /tmp/ipc/send/cassWorkloadUpdate-3
