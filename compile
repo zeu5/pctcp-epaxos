@@ -9,6 +9,6 @@ elif [ $# -eq 2 ] && [ $2 == "all" ]; then
   cd $dmck_dir && ant clean && rm -f *.jar && ant && ./$1/setup
 else
   help="usage: ./compile [choose one : scm / sample-le / cassandra-2.0.0 / kudu-0.9.1 /\
-  zookeeper-3.1.0] [additional option: all]"
+  zookeeper-3.1.0 / epaxos] [additional option: all]"
   echo $help
 fi

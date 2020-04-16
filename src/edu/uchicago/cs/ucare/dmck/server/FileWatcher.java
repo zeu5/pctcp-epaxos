@@ -24,6 +24,8 @@ public abstract class FileWatcher implements Runnable {
   protected ArrayList<String> acceptedFiles;
   protected HashMap<Long, Integer> packetCount;
 
+  public FileWatcher(){}
+
   public FileWatcher(String sPath, ModelCheckingServerAbstract dmck) {
     ipcDir = sPath;
     path = new File(sPath + "/send");

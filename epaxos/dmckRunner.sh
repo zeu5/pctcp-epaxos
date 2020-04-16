@@ -6,7 +6,7 @@ if [ $# -eq 1 ] && [ $1 == "-p" ]; then
   pause="-p"
 fi
 
-. ./readconfig
+. ./target-sys.conf
 
 classpath=$dmck_dir/bin:$working_dir
 lib=$dmck_dir/lib

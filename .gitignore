@@ -8,3 +8,7 @@ ivy
 lib/*.jar
 target-sys.conf
 *.iml
+
+.vscode
+.idea
+out

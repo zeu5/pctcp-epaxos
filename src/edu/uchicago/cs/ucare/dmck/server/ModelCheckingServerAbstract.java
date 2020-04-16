@@ -273,7 +273,7 @@ public abstract class ModelCheckingServerAbstract implements ModelCheckingServer
   }
 
   public void offerPacket(Event event) {
-    messagesQueues[(int) event.getValue("sendNode")][(int) event.getValue("recvNode")].add(event);
+      messagesQueues[(int) event.getValue("sendNode")][(int) event.getValue("recvNode")].add(event);
   }
 
   public void offerLocalEvent(Event event) {
