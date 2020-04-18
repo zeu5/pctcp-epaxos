@@ -17,20 +17,25 @@ public class EpaxosFileWatcher extends FileWatcher {
 
     public void proceedEachFile(String filename, Properties ev){
 
-        if(filename.startsWith(FILE_PREFIX)) {
-            long eventid = Long.parseLong(ev.getProperty("eventId"));
-            int sender = Integer.parseInt(ev.getProperty("sender"));
-            int recv = Integer.parseInt(ev.getProperty("recv"));
+        try {
+            if (filename.startsWith(FILE_PREFIX)) {
+                long eventid = Long.parseLong(ev.getProperty("eventId"));
+                int sender = Integer.parseInt(ev.getProperty("sender"));
+                int recv = Integer.parseInt(ev.getProperty("recv"));
 
-            Event event = new Event(commonHashId(eventid));
-            event.addKeyValue(Event.FILENAME, filename);
-            event.addKeyValue(Event.FROM_ID, sender);
-            event.addKeyValue(Event.TO_ID, recv);
-            event.addKeyValue("eventId", eventid);
-            event.addKeyValue("verb", Integer.parseInt(ev.getProperty("msgtype")));
-            event.setVectorClock(dmck.getVectorClock(sender, recv));
+                Event event = new Event(commonHashId(eventid));
+                event.addKeyValue(Event.FILENAME, filename);
+                event.addKeyValue(Event.FROM_ID, sender);
+                event.addKeyValue(Event.TO_ID, recv);
+                event.addKeyValue("eventId", eventid);
+                event.addKeyValue("verb", ev.getProperty("msgtype"));
+                event.addKeyValue("msg", ev.getProperty("msg"));
+                event.setVectorClock(dmck.getVectorClock(sender, recv));
 
-            dmck.offerPacket(event);
+                dmck.offerPacket(event);
+            }
+        } catch (Exception e) {
+            LOG.error("Error accepting file");
         }
     }
 

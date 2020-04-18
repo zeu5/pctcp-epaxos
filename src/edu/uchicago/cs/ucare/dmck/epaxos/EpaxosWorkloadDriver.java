@@ -105,11 +105,11 @@ public class EpaxosWorkloadDriver extends WorkloadDriver {
     public void startWorkload() {
         try {
             ProcessBuilder pb = new ProcessBuilder(
-                new String[]{"client", "-e", "-q", "5"}
+                new String[]{"workloadclient"}
             );
             pb.directory(new File(this.binPath.toString()));
 
-            File logFile = new File(Paths.get(this.logPath.toString(),"wordkload_log").toString());
+            File logFile = new File(Paths.get(this.logPath.toString(),"workload_log").toString());
             pb.redirectErrorStream(true);
             pb.redirectOutput(logFile);
 
