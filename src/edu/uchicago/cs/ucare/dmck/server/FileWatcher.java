@@ -52,7 +52,7 @@ public abstract class FileWatcher implements Runnable {
             Properties ev = new Properties();
             FileInputStream evInputStream = new FileInputStream(path + "/" + file.getName());
             ev.load(evInputStream);
-            proceedEachFile(file.getName(), ev);
+            if(acceptFile) { proceedEachFile(file.getName(), ev); }
           }
         }
       } catch (Exception e) {
