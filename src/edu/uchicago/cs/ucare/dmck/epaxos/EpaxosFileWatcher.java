@@ -22,8 +22,9 @@ public class EpaxosFileWatcher extends FileWatcher {
                 long eventid = Long.parseLong(ev.getProperty("eventId"));
                 int sender = Integer.parseInt(ev.getProperty("sender"));
                 int recv = Integer.parseInt(ev.getProperty("recv"));
+                int msgtypecode = Integer.parseInt(ev.getProperty("msgtypecode"));
 
-                Event event = new Event(commonHashId(eventid));
+                Event event = new Event(sender*1000 + recv*100 + msgtypecode);
                 event.addKeyValue(Event.FILENAME, filename);
                 event.addKeyValue(Event.FROM_ID, sender);
                 event.addKeyValue(Event.TO_ID, recv);
@@ -32,6 +33,7 @@ public class EpaxosFileWatcher extends FileWatcher {
                 event.addKeyValue("msg", ev.getProperty("msg"));
                 event.setVectorClock(dmck.getVectorClock(sender, recv));
 
+                LOG.info("Offering event with id: " + eventid);
                 dmck.offerPacket(event);
             }
         } catch (Exception e) {

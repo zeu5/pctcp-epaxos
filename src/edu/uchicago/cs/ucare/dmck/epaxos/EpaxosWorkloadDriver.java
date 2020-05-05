@@ -123,7 +123,7 @@ public class EpaxosWorkloadDriver extends WorkloadDriver {
     public void startNode(int id) {
         try {
             ProcessBuilder pb = new ProcessBuilder(
-                new String[]{"server", "-e", "-port", Integer.toString(7070+id)}
+                new String[]{"server", "-exec", "-dreply", "-e", "-port", Integer.toString(7070+id)}
             );
             pb.directory(new File(this.binPath.toString()));
 
