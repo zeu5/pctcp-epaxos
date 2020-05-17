@@ -7,6 +7,8 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Properties;
+import java.util.concurrent.Semaphore;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import edu.uchicago.cs.ucare.dmck.event.Event;
@@ -23,6 +25,8 @@ public abstract class FileWatcher implements Runnable {
   protected boolean acceptFile;
   protected ArrayList<String> acceptedFiles;
   protected HashMap<Long, Integer> packetCount;
+
+  private static Semaphore sem = new Semaphore(1);
 
   public FileWatcher(){}
 
@@ -43,6 +47,7 @@ public abstract class FileWatcher implements Runnable {
 
     while (!Thread.interrupted()) {
       try {
+        sem.acquire();
         if (path.listFiles().length > 0 && acceptFile) {
           for (File file : path.listFiles()) {
             if (acceptedFiles.contains(file.getName())) {
@@ -57,6 +62,8 @@ public abstract class FileWatcher implements Runnable {
         }
       } catch (Exception e) {
         e.printStackTrace();
+      } finally {
+        sem.release();
       }
     }
   }
@@ -75,7 +82,14 @@ public abstract class FileWatcher implements Runnable {
   }
 
   public void setAcceptFile(boolean flag) {
-    acceptFile = flag;
+    try {
+      sem.acquire();
+      acceptFile = flag;
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      sem.release();
+    }
   }
 
   protected synchronized void appendReceivedUpdates(String update) {
